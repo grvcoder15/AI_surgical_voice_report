@@ -497,6 +497,10 @@ PATIENT INFORMATION
 - Date of Birth: [from transcript]
 - Age: [from transcript]
 - Gender: [from transcript]
+- Date of Surgery: [from transcript]
+- Surgery Start Time: [from transcript]
+- Surgery End Time: [from transcript]
+- Total Duration: [calculated from start and end time]
 - Laterality: [from transcript]
 
 QUALITY NOTES
