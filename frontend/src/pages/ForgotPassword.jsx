@@ -23,6 +23,7 @@ export default function ForgotPassword() {
     } catch (err) {
       setError(err.message || 'Unable to request password reset');
     } finally {
+      console.log('Request password reset completed');
       setLoading(false);
     }
   };
