@@ -172,6 +172,67 @@ async function sendEmail(report, callId = 'unknown', options = {}) {
   }
 }
 
+async function sendPasswordResetEmail(email, resetLink, expiresAt) {
+  try {
+    const expiresText = expiresAt instanceof Date
+      ? expiresAt.toLocaleString('en-IN', { hour12: true })
+      : 'soon';
+
+    const smtpConfigured = process.env.SMTP_HOST &&
+      process.env.SMTP_USER &&
+      process.env.SMTP_PASS;
+
+    logger.info(`Password reset link generated for ${email}`);
+    logger.info(`Reset link: ${resetLink}`);
+
+    if (!smtpConfigured) {
+      logger.warn('SMTP not configured. Password reset link logged to server output only.');
+      return;
+    }
+
+    const smtpPassword = String(process.env.SMTP_PASS || '').replace(/\s+/g, '');
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT || 587,
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: smtpPassword
+      }
+    });
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_FROM || process.env.SMTP_USER,
+      to: email,
+      subject: 'Password Reset Request - Surgical KB Manager',
+      text: `You requested a password reset. Use this link: ${resetLink}. This link expires at ${expiresText}.`,
+      html: `
+        <div style="background:#f4f6f8;padding:24px;font-family:Segoe UI,Arial,sans-serif;color:#1f2937;">
+          <div style="max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
+            <div style="background:linear-gradient(120deg,#0f172a,#1d4ed8);color:#ffffff;padding:20px 22px;">
+              <h2 style="margin:0;font-size:19px;">Reset Your Password</h2>
+            </div>
+            <div style="padding:18px 22px;font-size:14px;line-height:1.6;">
+              <p style="margin:0 0 10px 0;">We received a request to reset your password.</p>
+              <p style="margin:0 0 16px 0;">This link is valid until <strong>${escapeHtml(expiresText)}</strong>.</p>
+              <p style="margin:0 0 18px 0;">
+                <a href="${escapeHtml(resetLink)}" style="display:inline-block;padding:10px 16px;border-radius:8px;background:#0d9a94;color:#ffffff;text-decoration:none;font-weight:700;">Reset Password</a>
+              </p>
+              <p style="margin:0 0 8px 0;font-size:12px;color:#6b7280;word-break:break-all;">If the button does not work, paste this URL in browser:<br>${escapeHtml(resetLink)}</p>
+            </div>
+          </div>
+        </div>
+      `
+    });
+
+    logger.info(`Password reset email sent to ${email}`);
+  } catch (error) {
+    logger.error(`Password reset email failed: ${error.message}`);
+  }
+}
+
 module.exports = {
-  sendEmail
+  sendEmail,
+  sendPasswordResetEmail
 };
